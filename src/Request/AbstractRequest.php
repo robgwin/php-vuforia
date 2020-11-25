@@ -7,6 +7,7 @@ use DateTimeZone;
 use Exception;
 use HTTP_Request2;
 use HTTP_Request2_Exception;
+use Illuminate\Support\Facades\Log;
 
 abstract class AbstractRequest
 {
@@ -16,6 +17,7 @@ abstract class AbstractRequest
     protected $naming_rule;
     protected $max_meta_size;
     protected $max_image_size;
+    protected $fake_success;
 
     public function __construct(array $config)
     {
@@ -25,6 +27,8 @@ abstract class AbstractRequest
         $this->naming_rule = $config['naming_rule'];
         $this->max_meta_size = $config['max_meta_size'];
         $this->max_image_size = $config['max_image_size'];
+        $this->fake_success = $config['fake_success'];
+        $this->log_requests = $config['log_requests'];
     }
 
     protected function request(
@@ -34,6 +38,18 @@ abstract class AbstractRequest
         $headers = null
     )
     {
+
+        if ($this->log_requests) {
+            $this->logRequest($method, $uri, $body, $headers);
+        }
+
+        if ($this->fake_success) {
+            return [
+                'status' => 200,
+                'message' => 'faking success',
+                'data' => json_decode('{"fake":"fake"}'),
+            ];
+        }
 
         if (empty($this->access_key) || empty($this->secret_key)) {
             throw new Exception('Missing Vuforia Access/Secret Key(s)');
@@ -87,6 +103,28 @@ abstract class AbstractRequest
                 'data' => [],
             ];
         }
+    }
+
+    protected function logRequest(
+        $method,
+        $uri,
+        $body = null,
+        $headers = null
+    )
+    {
+        if (!class_exists('Log')) return false;
+
+        if (!empty($body)){
+            $body = json_decode($body);
+            if (!empty($body->image))
+                $body->image = "[".strlen($body->image)." chars of image data]";
+            if (!empty($body->application_metadata))
+                $body->application_metadata = base64_decode($body->application_metadata);
+            $body = json_encode($body);
+        }
+
+        Log::debug('Vuforia Request: '.$method.' '.$uri);
+        Log::debug($body);
     }
 
     private function sign(HTTP_Request2 $request)

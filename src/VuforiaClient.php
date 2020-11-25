@@ -59,6 +59,24 @@ class VuforiaClient
         |
         */
         'api_base' => 'https://vws.vuforia.com/',
+
+        /*
+        |--------------------------------------------------------------
+        | Log API request data (for dev/debug)
+        |--------------------------------------------------------------
+        |
+        |
+        */
+        'log_requests' => false,
+
+        /*
+        |--------------------------------------------------------------
+        | Don't actually make requests, return fake success responses
+        |--------------------------------------------------------------
+        |
+        |
+        */
+        'fake_success' => false,
     ];
 
     /**

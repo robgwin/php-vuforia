@@ -18,10 +18,16 @@ class TargetRequest extends AbstractRequest
 
     public function get($id)
     {
-        return $this->request(
+        $response = $this->request(
             HTTP_Request2::METHOD_GET,
             'targets/' . $id
         );
+
+        if ($this->fake_success) {
+            $response['data']->status = "success";
+        }
+
+        return $response;
     }
 
     public function create($target)
@@ -64,12 +70,18 @@ class TargetRequest extends AbstractRequest
             throw new Exception("Metadata is too large");
         }
 
-        return $this->request(
+        $response = $this->request(
             HTTP_Request2::METHOD_POST,
             'targets',
             json_encode($target),
             ['Content-Type' => 'application/json']
         );
+
+        if ($this->fake_success) {
+            $response['data']->target_id = "fakeTargetId".time();
+        }
+
+        return $response;
     }
 
     public function update($id, $target)
